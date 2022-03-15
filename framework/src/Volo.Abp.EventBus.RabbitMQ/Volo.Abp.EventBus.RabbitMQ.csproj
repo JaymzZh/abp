@@ -4,6 +4,7 @@
   <Import Project="..\..\..\common.props" />
 
   <PropertyGroup>
+    <Version>$(Version)-inbiz</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Volo.Abp.EventBus.RabbitMQ</AssemblyName>
     <PackageId>Volo.Abp.EventBus.RabbitMQ</PackageId>
