@@ -69,10 +69,17 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
 
     public void Initialize()
     {
+        InitRepeatedConsumer();
+        InitConsumer();
+        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
+    }
+
+    private void InitRepeatedConsumer()
+    {
         var hostEntry = Dns.GetHostEntry(Dns.GetHostName())
             .AddressList
             .FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
-        
+
         RepeatedConsumer = MessageConsumerFactory.Create(
             new ExchangeDeclareConfiguration(
                 GetExchangeName(),
@@ -87,9 +94,12 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
             ),
             AbpRabbitMqEventBusOptions.ConnectionName
         );
-        
-        RepeatedConsumer.OnMessageReceived(ProcessEventAsync);
 
+        RepeatedConsumer.OnMessageReceived(ProcessEventAsync);
+    }
+
+    private void InitConsumer()
+    {
         Consumer = MessageConsumerFactory.Create(
             new ExchangeDeclareConfiguration(
                 AbpRabbitMqEventBusOptions.ExchangeName,
@@ -106,8 +116,6 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         );
 
         Consumer.OnMessageReceived(ProcessEventAsync);
-
-        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
     }
 
     private async Task ProcessEventAsync(IModel channel, BasicDeliverEventArgs ea)
