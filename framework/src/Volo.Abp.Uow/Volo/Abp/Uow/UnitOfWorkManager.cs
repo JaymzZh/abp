@@ -112,11 +112,17 @@ namespace Volo.Abp.Uow
 
                 _ambientUnitOfWork.SetUnitOfWork(unitOfWork);
 
-                unitOfWork.Disposed += (sender, args) =>
+                EventHandler<UnitOfWorkEventArgs> UnitOfWorkOnDisposed()
                 {
-                    _ambientUnitOfWork.SetUnitOfWork(outerUow);
-                    scope.Dispose();
-                };
+                    return (sender, args) =>
+                    {
+                        _ambientUnitOfWork.SetUnitOfWork(outerUow);
+                        unitOfWork.Disposed -= UnitOfWorkOnDisposed();
+                        scope.Dispose();
+                    };
+                }
+
+                unitOfWork.Disposed += UnitOfWorkOnDisposed();
 
                 return unitOfWork;
             }

@@ -102,7 +102,9 @@ namespace Autofac.Extensions.DependencyInjection
             {
                 throw new AbpException("Unable get type of Autofac.Extensions.DependencyInjection.AutofacServiceScopeFactory!");
             }
-            builder.RegisterType(autofacServiceScopeFactory).As<IServiceScopeFactory>();
+            // Issue https://github.com/autofac/Autofac.Extensions.DependencyInjection/issues/83
+            // IServiceScopeFactory must be a singleton and scopes must be flat, not hierarchical.
+            builder.RegisterType(autofacServiceScopeFactory).As<IServiceScopeFactory>().SingleInstance();
 
             Register(builder, services, lifetimeScopeTagForSingletons);
         }

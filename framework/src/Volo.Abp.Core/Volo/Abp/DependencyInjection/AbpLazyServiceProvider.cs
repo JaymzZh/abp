@@ -6,6 +6,8 @@ namespace Volo.Abp.DependencyInjection
 {
     public class AbpLazyServiceProvider : IAbpLazyServiceProvider, ITransientDependency
     {
+        private bool _isDisposed;
+
         protected IDictionary<Type, object> CachedServices { get; set; }
 
         protected IServiceProvider ServiceProvider { get; set; }
@@ -54,6 +56,28 @@ namespace Volo.Abp.DependencyInjection
         public virtual object LazyGetService(Type serviceType, Func<IServiceProvider, object> factory)
         {
             return CachedServices.GetOrAdd(serviceType, () => factory(ServiceProvider));
+        }
+        
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                CachedServices.Clear();
+                CachedServices = null;
+            }
+
+            _isDisposed = true;
         }
     }
 }

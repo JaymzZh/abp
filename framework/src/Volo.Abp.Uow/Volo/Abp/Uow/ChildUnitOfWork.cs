@@ -36,9 +36,19 @@ namespace Volo.Abp.Uow
             Check.NotNull(parent, nameof(parent));
 
             _parent = parent;
+            
+            _parent.Failed += ParentOnFailed();
+            _parent.Disposed += ParentOnDisposed();
+        }
 
-            _parent.Failed += (sender, args) => { Failed.InvokeSafely(sender, args); };
-            _parent.Disposed += (sender, args) => { Disposed.InvokeSafely(sender, args); };
+        private EventHandler<UnitOfWorkEventArgs> ParentOnDisposed()
+        {
+            return (sender, args) => { Disposed.InvokeSafely(sender, args); };
+        }
+
+        private EventHandler<UnitOfWorkFailedEventArgs> ParentOnFailed()
+        {
+            return (sender, args) => { Failed.InvokeSafely(sender, args); };
         }
 
         public void SetOuter(IUnitOfWork outer)
@@ -108,7 +118,11 @@ namespace Volo.Abp.Uow
 
         public void Dispose()
         {
-
+            if (_parent != null)
+            {
+                _parent.Failed -= ParentOnFailed();
+                _parent.Disposed -= ParentOnDisposed();
+            }
         }
 
         public override string ToString()

@@ -2,7 +2,7 @@
 
 namespace Volo.Abp.DependencyInjection
 {
-    public interface IAbpLazyServiceProvider
+    public interface IAbpLazyServiceProvider : IDisposable
     {
         T LazyGetRequiredService<T>();
 

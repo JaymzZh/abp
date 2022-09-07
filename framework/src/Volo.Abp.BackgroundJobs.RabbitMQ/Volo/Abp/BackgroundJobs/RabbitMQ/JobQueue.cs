@@ -115,6 +115,11 @@ namespace Volo.Abp.BackgroundJobs.RabbitMQ
 
             IsDiposed = true;
 
+            if (Consumer != null)
+            {
+                Consumer.Received -= MessageReceived;
+            }
+
             ChannelAccessor?.Dispose();
         }
 

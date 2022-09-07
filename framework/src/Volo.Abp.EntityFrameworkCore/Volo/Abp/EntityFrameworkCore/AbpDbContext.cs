@@ -657,6 +657,13 @@ namespace Volo.Abp.EntityFrameworkCore
             return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left, right), parameter);
         }
 
+        public async override ValueTask DisposeAsync()
+        {
+            ChangeTracker.Tracked -= ChangeTracker_Tracked;
+
+            await base.DisposeAsync();
+        }
+
         class ReplaceExpressionVisitor : ExpressionVisitor
         {
             private readonly Expression _oldValue;

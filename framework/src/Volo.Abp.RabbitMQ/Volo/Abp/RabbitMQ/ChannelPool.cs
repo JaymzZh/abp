@@ -14,7 +14,7 @@ namespace Volo.Abp.RabbitMQ
     {
         protected IConnectionPool ConnectionPool { get; }
 
-        protected ConcurrentDictionary<string, ChannelPoolItem> Channels { get; }
+        protected ConcurrentDictionary<string, Lazy<ChannelPoolItem>> Channels { get; }
 
         protected bool IsDisposed { get; private set; }
 
@@ -25,7 +25,7 @@ namespace Volo.Abp.RabbitMQ
         public ChannelPool(IConnectionPool connectionPool)
         {
             ConnectionPool = connectionPool;
-            Channels = new ConcurrentDictionary<string, ChannelPoolItem>();
+            Channels = new ConcurrentDictionary<string, Lazy<ChannelPoolItem>>();
             Logger = NullLogger<ChannelPool>.Instance;
         }
 
@@ -37,15 +37,15 @@ namespace Volo.Abp.RabbitMQ
 
             var poolItem = Channels.GetOrAdd(
                 channelName,
-                _ => new ChannelPoolItem(CreateChannel(channelName, connectionName))
+                _ => new Lazy<ChannelPoolItem>(() => new ChannelPoolItem(CreateChannel(channelName, connectionName)))
             );
 
-            poolItem.Acquire();
+            poolItem.Value.Acquire();
 
             return new ChannelAccessor(
-                poolItem.Channel,
+                poolItem.Value.Channel,
                 channelName,
-                () => poolItem.Release()
+                () => poolItem.Value.Release()
             );
         }
 
@@ -91,8 +91,8 @@ namespace Volo.Abp.RabbitMQ
 
                 try
                 {
-                    poolItem.WaitIfInUse(remainingWaitDuration);
-                    poolItem.Dispose();
+                    poolItem.Value.WaitIfInUse(remainingWaitDuration);
+                    poolItem.Value.Dispose();
                 }
                 catch
                 { }
