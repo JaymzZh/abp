@@ -6,7 +6,7 @@ using Volo.Abp.Domain.Entities;
 
 namespace Volo.Abp.Domain.Repositories.FreeSql;
 
-public interface IFreeSqlRepository<TEntity> : IRepository<TEntity>
+public interface IFreeSqlRepository<TEntity>
     where TEntity : class, IEntity
 {
     [Obsolete("Use GetDbConnectionAsync method.")]
@@ -44,7 +44,7 @@ public interface IFreeSqlRepository<TEntity> : IRepository<TEntity>
     // Task<bool> SoftDeleteAsync<TEntity>(IList<TEntity> entity), ISoftDelete;
 }
 
-public interface IFreeSqlRepository<TEntity, TKey> : IFreeSqlRepository<TEntity>, IRepository<TEntity, TKey>
+public interface IFreeSqlRepository<TEntity, TKey> : IFreeSqlRepository<TEntity>
     where TEntity : class, IEntity<TKey>
 {
 

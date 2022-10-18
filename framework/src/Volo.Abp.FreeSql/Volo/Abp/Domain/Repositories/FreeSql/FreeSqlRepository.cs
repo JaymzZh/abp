@@ -14,13 +14,16 @@ using Volo.Abp.EntityFrameworkCore;
 
 namespace Volo.Abp.Domain.Repositories.FreeSql;
 
-public class FreeSqlRepository<TDbContext, TEntity> : EfCoreRepository<TDbContext, TEntity>, IFreeSqlRepository<TEntity>
+public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity>
     where TDbContext : IEfCoreDbContext
     where TEntity : class, IEntity
 {
     private readonly IDbContextProvider<TDbContext> _dbContextProvider;
 
-    public FreeSqlRepository(IDbContextProvider<TDbContext> dbContextProvider) : base(dbContextProvider)
+    protected Func<Type, string, string> SelectTableRule = null;
+    protected Func<string, string> UpdateTableRule = null;
+
+    public FreeSqlRepository(IDbContextProvider<TDbContext> dbContextProvider)
     {
         _dbContextProvider = dbContextProvider;
     }
@@ -102,58 +105,58 @@ public class FreeSqlRepository<TDbContext, TEntity> : EfCoreRepository<TDbContex
     //         .LoadAsync(GetCancellationToken(cancellationToken));
     // }
 
-    // //https://github.com/dotnetcore/FreeSql/issues/267
-    // /// <summary>
-    // /// 不建议直接操作freesql实例
-    // /// </summary>
-    // protected IFreeSql FreeSql => DbConnection.GetIFreeSql();
+    //https://github.com/dotnetcore/FreeSql/issues/267
+    /// <summary>
+    /// 不建议直接操作freesql实例
+    /// </summary>
+    protected IFreeSql FreeSql => DbConnection.GetIFreeSql();
 
     [Obsolete("use SelectAsync method.")]
     public ISelect<TEntity> Select(Func<Type, string, string> tableRule = null)
     {
         return _dbContextProvider.GetDbContext().Database.CurrentTransaction == null
-            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Select<TEntity>().AsTable(tableRule)
-            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Select<TEntity>().AsTable(tableRule);
+            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Select<TEntity>().AsTable(tableRule ?? SelectTableRule)
+            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Select<TEntity>().AsTable(tableRule ?? SelectTableRule);
     }
 
     public async Task<ISelect<TEntity>> SelectAsync(Func<Type, string, string> tableRule = null)
     {
         return (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction == null
-            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Select<TEntity>().AsTable(tableRule)
+            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Select<TEntity>().AsTable(tableRule ?? SelectTableRule)
             : (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction!.GetDbTransaction()
-            .Select<TEntity>().AsTable(tableRule);
+            .Select<TEntity>().AsTable(tableRule ?? SelectTableRule);
     }
 
     [Obsolete("use InsertAsync method.")]
     public IInsert<TEntity> Insert(Func<string, string> tableRule = null)
     {
         return _dbContextProvider.GetDbContext().Database.CurrentTransaction == null
-            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Insert<TEntity>().AsTable(tableRule)
-            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Insert<TEntity>().AsTable(tableRule);
+            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Insert<TEntity>().AsTable(tableRule ?? UpdateTableRule)
+            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Insert<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
 
     public async Task<IInsert<TEntity>> InsertAsync(Func<string, string> tableRule = null)
     {
         return (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction == null
-            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Insert<TEntity>().AsTable(tableRule)
+            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Insert<TEntity>().AsTable(tableRule ?? UpdateTableRule)
             : (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction!.GetDbTransaction()
-            .Insert<TEntity>().AsTable(tableRule);
+            .Insert<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
 
     [Obsolete("use UpdateAsync method.")]
     public IUpdate<TEntity> Update(Func<string, string> tableRule = null)
     {
         return _dbContextProvider.GetDbContext().Database.CurrentTransaction == null
-            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Update<TEntity>().AsTable(tableRule)
-            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Update<TEntity>().AsTable(tableRule);
+            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Update<TEntity>().AsTable(tableRule ?? UpdateTableRule)
+            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Update<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
 
     public async Task<IUpdate<TEntity>> UpdateAsync(Func<string, string> tableRule = null)
     {
         return (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction == null
-            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Update<TEntity>().AsTable(tableRule)
+            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Update<TEntity>().AsTable(tableRule ?? UpdateTableRule)
             : (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction!.GetDbTransaction()
-            .Update<TEntity>().AsTable(tableRule);
+            .Update<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
 
     // [Obsolete("use InsertOrUpdateAsync method.")]
@@ -177,16 +180,16 @@ public class FreeSqlRepository<TDbContext, TEntity> : EfCoreRepository<TDbContex
     public IDelete<TEntity> Delete(Func<string, string> tableRule = null)
     {
         return _dbContextProvider.GetDbContext().Database.CurrentTransaction == null
-            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Delete<TEntity>().AsTable(tableRule)
-            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Delete<TEntity>().AsTable(tableRule);
+            ? _dbContextProvider.GetDbContext().Database.GetDbConnection().Delete<TEntity>().AsTable(tableRule ?? UpdateTableRule)
+            : _dbContextProvider.GetDbContext().Database.CurrentTransaction!.GetDbTransaction().Delete<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
 
     public async Task<IDelete<TEntity>> DeleteAsync(Func<string, string> tableRule = null)
     {
         return (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction == null
-            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Delete<TEntity>().AsTable(tableRule)
+            ? (await _dbContextProvider.GetDbContextAsync()).Database.GetDbConnection().Delete<TEntity>().AsTable(tableRule ?? UpdateTableRule)
             : (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction!.GetDbTransaction()
-            .Delete<TEntity>().AsTable(tableRule);
+            .Delete<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
     
 
@@ -261,52 +264,12 @@ public class FreeSqlRepository<TDbContext, TEntity> : EfCoreRepository<TDbContex
 }
 
 public class FreeSqlRepository<TDbContext, TEntity, TKey> : FreeSqlRepository<TDbContext, TEntity>,
-    IFreeSqlRepository<TEntity, TKey>,
-    ISupportsExplicitLoading<TEntity, TKey>
+    IFreeSqlRepository<TEntity, TKey>
 
     where TDbContext : IEfCoreDbContext
     where TEntity : class, IEntity<TKey>
 {
     public FreeSqlRepository(IDbContextProvider<TDbContext> dbContextProvider) : base(dbContextProvider)
     {
-    }
-    
-    public virtual async Task<TEntity> GetAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(id, includeDetails, GetCancellationToken(cancellationToken));
-
-        if (entity == null)
-        {
-            throw new EntityNotFoundException(typeof(TEntity), id);
-        }
-
-        return entity;
-    }
-
-    public virtual async Task<TEntity> FindAsync(TKey id, bool includeDetails = true, CancellationToken cancellationToken = default)
-    {
-        return includeDetails
-            ? await (await WithDetailsAsync()).OrderBy(e => e.Id).FirstOrDefaultAsync(e => e.Id.Equals(id), GetCancellationToken(cancellationToken))
-            : await (await GetDbSetAsync()).FindAsync(new object[] { id }, GetCancellationToken(cancellationToken));
-    }
-
-    public virtual async Task DeleteAsync(TKey id, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        var entity = await FindAsync(id, cancellationToken: cancellationToken);
-        if (entity == null)
-        {
-            return;
-        }
-
-        await DeleteAsync(entity, autoSave, cancellationToken);
-    }
-
-    public virtual async Task DeleteManyAsync(IEnumerable<TKey> ids, bool autoSave = false, CancellationToken cancellationToken = default)
-    {
-        cancellationToken = GetCancellationToken(cancellationToken);
-
-        var entities = await (await GetDbSetAsync()).Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
-
-        await DeleteManyAsync(entities, autoSave, cancellationToken);
     }
 }
