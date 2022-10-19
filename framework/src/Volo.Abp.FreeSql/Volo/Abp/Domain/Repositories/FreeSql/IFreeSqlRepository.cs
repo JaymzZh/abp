@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data;
+using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using FreeSql;
 using Volo.Abp.Domain.Entities;
@@ -42,6 +45,26 @@ public interface IFreeSqlRepository<TEntity>
     // Task<bool> SoftDeleteAsync<TEntity>(TEntity entity), ISoftDelete;
     //
     // Task<bool> SoftDeleteAsync<TEntity>(IList<TEntity> entity), ISoftDelete;
+
+    Task InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetListAsync(CancellationToken cancellationToken = default);
+
+    Task<long> GetCountAsync(CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting,
+        CancellationToken cancellationToken = default);
+
+    Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default);
 }
 
 public interface IFreeSqlRepository<TEntity, TKey> : IFreeSqlRepository<TEntity>

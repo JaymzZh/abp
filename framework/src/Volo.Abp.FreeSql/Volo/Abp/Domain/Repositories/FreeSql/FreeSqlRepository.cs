@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,7 +8,6 @@ using FreeSql;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Volo.Abp.Domain.Entities;
-using Volo.Abp.Domain.Repositories.EntityFrameworkCore;
 using Volo.Abp.EntityFrameworkCore;
 
 namespace Volo.Abp.Domain.Repositories.FreeSql;
@@ -191,7 +189,6 @@ public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity
             : (await _dbContextProvider.GetDbContextAsync()).Database.CurrentTransaction!.GetDbTransaction()
             .Delete<TEntity>().AsTable(tableRule ?? UpdateTableRule);
     }
-    
 
     // public async Task<bool> SoftDeleteAsync<TEntity>(TEntity entity) where TEntity : class, ISoftDelete
     // {
@@ -207,56 +204,74 @@ public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity
     //     return row == entities.Count();
     // }
     // public async override Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        var insert = await InsertAsync();
+        await insert.AppendData(entity).ExecuteAffrowsAsync(cancellationToken);
+    }
+    
     // public async override Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        var update = await UpdateAsync();
+        await update.SetSource(entity).ExecuteAffrowsAsync(cancellationToken);
+    }
+    
     // public async override Task DeleteAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        var delete = await DeleteAsync();
+        await delete.Where(entity).ExecuteAffrowsAsync(cancellationToken);
+    }
+    
     // public async override Task<List<TEntity>> GetListAsync(bool includeDetails = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
-    // public async override Task<long> GetCountAsync(CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task<List<TEntity>> GetListAsync(CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.ToListAsync(cancellationToken);
+    }
+    
+    public async Task<long> GetCountAsync(CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.CountAsync(cancellationToken);
+    }
+    
     // public async override Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false,
     //     CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting,
+        CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.Skip(skipCount).Take(maxResultCount).OrderBy(sorting).ToListAsync(cancellationToken);
+    }
+    
     // public async override Task<IQueryable<TEntity>> GetQueryableAsync()
     // {
     //     throw new NotImplementedException();
     // }
-    //
+    
     // public async override Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = true, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.Where(predicate).FirstAsync(cancellationToken);
+    }
+    
     // public async override Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, bool autoSave = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task DeleteAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var delete = await DeleteAsync();
+        await delete.Where(predicate).ExecuteAffrowsAsync(cancellationToken);
+    }
+    
     // public async override Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, bool includeDetails = false, CancellationToken cancellationToken = default)
-    // {
-    //     throw new NotImplementedException();
-    // }
-    //
+    public async Task<List<TEntity>> GetListAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.Where(predicate).ToListAsync(cancellationToken);
+    }
+    
     // protected override IQueryable<TEntity> GetQueryable()
     // {
     //     throw new NotImplementedException();
