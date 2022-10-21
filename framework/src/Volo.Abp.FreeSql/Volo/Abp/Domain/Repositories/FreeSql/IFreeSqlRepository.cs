@@ -46,7 +46,7 @@ public interface IFreeSqlRepository<TEntity>
     //
     // Task<bool> SoftDeleteAsync<TEntity>(IList<TEntity> entity), ISoftDelete;
 
-    Task InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task<long> InsertAsync(TEntity entity, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
 

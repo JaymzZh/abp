@@ -204,10 +204,16 @@ public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity
     //     return row == entities.Count();
     // }
     // public async override Task<TEntity> InsertAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
-    public async Task InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
+    // public async Task InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
+    // {
+    //     var insert = await InsertAsync();
+    //     await insert.AppendData(entity).ExecuteAffrowsAsync(cancellationToken);
+    // }
+
+    public async Task<long> InsertAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         var insert = await InsertAsync();
-        await insert.AppendData(entity).ExecuteAffrowsAsync(cancellationToken);
+        return await insert.AppendData(entity).ExecuteIdentityAsync(cancellationToken);
     }
     
     // public async override Task<TEntity> UpdateAsync(TEntity entity, bool autoSave = false, CancellationToken cancellationToken = default)
