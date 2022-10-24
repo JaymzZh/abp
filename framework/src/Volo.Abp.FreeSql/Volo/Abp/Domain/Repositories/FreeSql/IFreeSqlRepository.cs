@@ -56,7 +56,13 @@ public interface IFreeSqlRepository<TEntity>
 
     Task<long> GetCountAsync(CancellationToken cancellationToken = default);
 
+    Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);
+
     Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting,
+        CancellationToken cancellationToken = default);
+
+    Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate, int skipCount, int maxResultCount,
+        string sorting,
         CancellationToken cancellationToken = default);
 
     Task<TEntity> FindAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default);

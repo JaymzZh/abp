@@ -243,6 +243,12 @@ public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity
         return await select.CountAsync(cancellationToken);
     }
     
+    public async Task<long> GetCountAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.Where(predicate).CountAsync(cancellationToken);
+    }
+    
     // public async override Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting, bool includeDetails = false,
     //     CancellationToken cancellationToken = default)
     public async Task<List<TEntity>> GetPagedListAsync(int skipCount, int maxResultCount, string sorting,
@@ -250,6 +256,13 @@ public class FreeSqlRepository<TDbContext, TEntity> : IFreeSqlRepository<TEntity
     {
         var select = await SelectAsync();
         return await select.Skip(skipCount).Take(maxResultCount).OrderBy(sorting).ToListAsync(cancellationToken);
+    }
+
+    public async Task<List<TEntity>> GetPagedListAsync(Expression<Func<TEntity, bool>> predicate, int skipCount, int maxResultCount, string sorting,
+        CancellationToken cancellationToken = default)
+    {
+        var select = await SelectAsync();
+        return await select.Where(predicate).Skip(skipCount).Take(maxResultCount).OrderBy(sorting).ToListAsync(cancellationToken);
     }
     
     // public async override Task<IQueryable<TEntity>> GetQueryableAsync()
