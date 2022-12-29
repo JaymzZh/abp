@@ -3,8 +3,9 @@ using System.Collections.Concurrent;
 
 namespace Volo.Abp.DependencyInjection;
 
-public abstract class CachedServiceProviderBase
+public abstract class CachedServiceProviderBase : IDisposable
 {
+    private bool _isDisposed;
     protected IServiceProvider ServiceProvider { get; }
     protected ConcurrentDictionary<Type, Lazy<object>> CachedServices { get; }
 
@@ -21,5 +22,26 @@ public abstract class CachedServiceProviderBase
             serviceType,
             _ => new Lazy<object>(() => ServiceProvider.GetService(serviceType))
         ).Value;
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            CachedServices.Clear();
+        }
+
+        _isDisposed = true;
     }
 }

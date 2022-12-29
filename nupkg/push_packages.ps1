@@ -10,7 +10,7 @@ $version = $commonPropsXml.Project.PropertyGroup.Version
 $i = 0
 $errorCount = 0
 $totalProjectsCount = $projects.length
-$nugetUrl = "https://api.nuget.org/v3/index.json"
+$nugetUrl = "http://172.16.0.142:2020/repository/nuget-hosted/"
 Set-Location $packFolder
 
 foreach($project in $projects) {

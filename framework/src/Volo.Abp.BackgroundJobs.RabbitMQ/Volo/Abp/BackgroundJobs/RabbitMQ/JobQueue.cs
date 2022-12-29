@@ -117,6 +117,11 @@ public class JobQueue<TArgs> : IJobQueue<TArgs>
 
         IsDiposed = true;
 
+        if (Consumer != null)
+        {
+            Consumer.Received -= MessageReceived;
+        }
+
         ChannelAccessor?.Dispose();
     }
 
