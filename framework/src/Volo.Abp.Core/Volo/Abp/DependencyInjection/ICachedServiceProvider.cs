@@ -8,7 +8,7 @@ namespace Volo.Abp.DependencyInjection;
 /// This service's lifetime is scoped and it should be used
 /// for a limited scope.
 /// </summary>
-public interface ICachedServiceProvider : IServiceProvider
+public interface ICachedServiceProvider : IServiceProvider, IDisposable
 {
 
 }

@@ -702,6 +702,14 @@ public abstract class AbpDbContext<TDbContext> : DbContext, IAbpEfCoreDbContext,
         return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(left, right), parameter);
     }
 
+    public async override ValueTask DisposeAsync()
+    {
+        ChangeTracker.Tracked -= ChangeTracker_Tracked;
+        ChangeTracker.StateChanged -= ChangeTracker_StateChanged;
+
+        await base.DisposeAsync();
+    }
+
     class ReplaceExpressionVisitor : ExpressionVisitor
     {
         private readonly Expression _oldValue;
