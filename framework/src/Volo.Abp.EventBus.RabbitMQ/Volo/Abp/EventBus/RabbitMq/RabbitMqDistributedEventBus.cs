@@ -92,7 +92,8 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
                 $"{AbpRabbitMqEventBusOptions.ClientName}-{hostEntry}",
                 durable: false,
                 exclusive: false,
-                autoDelete: true
+                autoDelete: true,
+                prefetchCount: AbpRabbitMqEventBusOptions.PrefetchCount
             ),
             AbpRabbitMqEventBusOptions.ConnectionName
         );
@@ -112,7 +113,8 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
                 AbpRabbitMqEventBusOptions.ClientName,
                 durable: true,
                 exclusive: false,
-                autoDelete: false
+                autoDelete: false,
+                prefetchCount: AbpRabbitMqEventBusOptions.PrefetchCount
             ),
             AbpRabbitMqEventBusOptions.ConnectionName
         );

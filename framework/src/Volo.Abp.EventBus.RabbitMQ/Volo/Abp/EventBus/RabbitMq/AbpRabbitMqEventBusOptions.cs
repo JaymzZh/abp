@@ -14,6 +14,8 @@ public class AbpRabbitMqEventBusOptions
 
     public string ExchangeType { get; set; }
 
+    public ushort? PrefetchCount { get; set; }
+
     public string GetExchangeTypeOrDefault()
     {
         return string.IsNullOrEmpty(ExchangeType)
