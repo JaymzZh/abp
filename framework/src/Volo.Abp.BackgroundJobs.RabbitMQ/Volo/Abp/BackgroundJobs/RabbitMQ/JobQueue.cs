@@ -213,15 +213,19 @@ public class JobQueue<TArgs> : IJobQueue<TArgs>
                 await JobExecuter.ExecuteAsync(context);
                 ChannelAccessor.Channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
             }
-            catch (BackgroundJobExecutionException)
+            catch (BackgroundJobExecutionException ex)
             {
                 //TODO: Reject like that?
                 ChannelAccessor.Channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: true);
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBackgroundJobExecuter>>();
+                logger.LogError(ex, ex.Message);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 //TODO: Reject like that?
                 ChannelAccessor.Channel.BasicReject(deliveryTag: ea.DeliveryTag, requeue: false);
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBackgroundJobExecuter>>();
+                logger.LogError(ex, ex.Message);
             }
         }
     }
