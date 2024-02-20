@@ -200,9 +200,9 @@ public abstract class EventBusBase : IEventBus
     protected virtual async Task TriggerHandlerAsync(IEventHandlerFactory asyncHandlerFactory, Type eventType,
         object eventData, List<Exception> exceptions, InboxConfig inboxConfig = null)
     {
-        using (var eventHandlerWrapper = asyncHandlerFactory.GetHandler())
+        try
         {
-            try
+            using (var eventHandlerWrapper = asyncHandlerFactory.GetHandler())
             {
                 var handlerType = eventHandlerWrapper.EventHandler.GetType();
 
@@ -217,14 +217,14 @@ public abstract class EventBusBase : IEventBus
                     await EventHandlerInvoker.InvokeAsync(eventHandlerWrapper.EventHandler, eventData, eventType);
                 }
             }
-            catch (TargetInvocationException ex)
-            {
-                exceptions.Add(ex.InnerException);
-            }
-            catch (Exception ex)
-            {
-                exceptions.Add(ex);
-            }
+        }
+        catch (TargetInvocationException ex)
+        {
+            exceptions.Add(ex.InnerException);
+        }
+        catch (Exception ex)
+        {
+            exceptions.Add(ex);
         }
     }
 
