@@ -6,7 +6,7 @@ namespace Volo.Abp.DependencyInjection;
 /// This service is equivalent of the <see cref="ITransientCachedServiceProvider"/>.
 /// Use <see cref="ITransientCachedServiceProvider"/> instead of this interface, for new projects. 
 /// </summary>
-public interface IAbpLazyServiceProvider : ICachedServiceProviderBase
+public interface IAbpLazyServiceProvider : ICachedServiceProviderBase, IDisposable
 {
     /// <summary>
     /// This method is equivalent of the GetRequiredService method.

@@ -126,7 +126,7 @@
     <PackageVersion Include="Quartz.Extensions.DependencyInjection" Version="3.7.0" />
     <PackageVersion Include="Quartz.Plugins.TimeZoneConverter" Version="3.7.0" />
     <PackageVersion Include="Quartz.Serialization.Json" Version="3.7.0" />
-    <PackageVersion Include="RabbitMQ.Client" Version="6.6.0" />
+    <PackageVersion Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageVersion Include="Rebus" Version="8.0.1" />
     <PackageVersion Include="Rebus.ServiceProvider" Version="10.0.0" />
     <PackageVersion Include="Scriban" Version="5.9.0" />
@@ -167,5 +167,6 @@
     <PackageVersion Include="coverlet.collector" Version="6.0.0" />
     <PackageVersion Include="ConfigureAwait.Fody" Version="3.3.2" />
     <PackageVersion Include="Fody" Version="6.8.0" />
+    <PackageVersion Include="FreeSql.Repository" Version="3.2.815" />
   </ItemGroup>
 </Project>

@@ -1,4 +1,6 @@
-﻿namespace Volo.Abp.DependencyInjection;
+﻿using System;
+
+namespace Volo.Abp.DependencyInjection;
 
 /// <summary>
 /// Provides services by caching the resolved services.
@@ -6,7 +8,7 @@
 /// This service's lifetime is scoped and it should be used
 /// for a limited scope.
 /// </summary>
-public interface ICachedServiceProvider : ICachedServiceProviderBase
+public interface ICachedServiceProvider : ICachedServiceProviderBase, IDisposable
 {
 
 }

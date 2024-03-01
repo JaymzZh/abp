@@ -37,8 +37,18 @@ internal class ChildUnitOfWork : IUnitOfWork
 
         _parent = parent;
 
-        _parent.Failed += (sender, args) => { Failed.InvokeSafely(sender!, args); };
-        _parent.Disposed += (sender, args) => { Disposed.InvokeSafely(sender!, args); };
+        _parent.Failed += ParentOnFailed();
+        _parent.Disposed += ParentOnDisposed();
+    }
+
+    private EventHandler<UnitOfWorkEventArgs> ParentOnDisposed()
+    {
+        return (sender, args) => { Disposed.InvokeSafely(sender!, args); };
+    }
+
+    private EventHandler<UnitOfWorkFailedEventArgs> ParentOnFailed()
+    {
+        return (sender, args) => { Failed.InvokeSafely(sender!, args); };
     }
 
     public void SetOuter(IUnitOfWork? outer)
@@ -122,7 +132,11 @@ internal class ChildUnitOfWork : IUnitOfWork
 
     public void Dispose()
     {
-
+        if (_parent != null)
+        {
+            _parent.Failed -= ParentOnFailed();
+            _parent.Disposed -= ParentOnDisposed();
+        }
     }
 
     public override string ToString()

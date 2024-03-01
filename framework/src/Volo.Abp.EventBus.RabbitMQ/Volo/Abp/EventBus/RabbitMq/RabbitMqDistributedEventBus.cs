@@ -2,6 +2,8 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,8 +38,8 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
     protected ConcurrentDictionary<string, Type> EventTypes { get; }
     protected IRabbitMqMessageConsumerFactory MessageConsumerFactory { get; }
     protected IRabbitMqMessageConsumer Consumer { get; private set; } = default!;
-
-    private bool _exchangeCreated;
+    protected IRabbitMqMessageConsumer RepeatedConsumer { get; private set; } = default!;
+    private readonly Dictionary<Type, bool> _exchangeCreated;
 
     public RabbitMqDistributedEventBus(
         IOptions<AbpRabbitMqEventBusOptions> options,
@@ -71,9 +73,42 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
 
         HandlerFactories = new ConcurrentDictionary<Type, List<IEventHandlerFactory>>();
         EventTypes = new ConcurrentDictionary<string, Type>();
+        _exchangeCreated = new Dictionary<Type, bool>();
     }
 
     public void Initialize()
+    {
+        InitRepeatedConsumer();
+        InitConsumer();
+        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
+    }
+
+    private void InitRepeatedConsumer()
+    {
+        var hostEntry = Dns.GetHostEntry(Dns.GetHostName())
+            .AddressList
+            .FirstOrDefault(a => a.AddressFamily == AddressFamily.InterNetwork);
+
+        RepeatedConsumer = MessageConsumerFactory.Create(
+            new ExchangeDeclareConfiguration(
+                GetExchangeName(),
+                type: "fanout",
+                durable: true
+            ),
+            new QueueDeclareConfiguration(
+                $"{AbpRabbitMqEventBusOptions.ClientName}-{hostEntry}",
+                durable: false,
+                exclusive: false,
+                autoDelete: true,
+                prefetchCount: AbpRabbitMqEventBusOptions.PrefetchCount
+            ),
+            AbpRabbitMqEventBusOptions.ConnectionName
+        );
+
+        RepeatedConsumer.OnMessageReceived(ProcessEventAsync);
+    }
+
+    private void InitConsumer()
     {
         Consumer = MessageConsumerFactory.Create(
             new ExchangeDeclareConfiguration(
@@ -92,8 +127,6 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         );
 
         Consumer.OnMessageReceived(ProcessEventAsync);
-
-        SubscribeHandlers(AbpDistributedEventBusOptions.Handlers);
     }
 
     private async Task ProcessEventAsync(IModel channel, BasicDeliverEventArgs ea)
@@ -132,7 +165,14 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
 
         if (handlerFactories.Count == 1) //TODO: Multi-threading!
         {
-            Consumer.BindAsync(EventNameAttribute.GetNameOrDefault(eventType));
+            if (IsRepeated(eventType))
+            {
+                RepeatedConsumer.BindAsync("");
+            }
+            else
+            {
+                Consumer.BindAsync(EventNameAttribute.GetNameOrDefault(eventType));
+            }
         }
 
         return new EventHandlerFactoryUnregistrar(this, eventType, factory);
@@ -289,7 +329,7 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         var eventName = EventNameAttribute.GetNameOrDefault(eventType);
         var body = Serializer.Serialize(eventData);
 
-        return PublishAsync( eventName, body, headersArguments, eventId, correlationId);
+        return PublishAsync(eventName, body, headersArguments, eventId, correlationId);
     }
 
     protected virtual Task PublishAsync(
@@ -313,7 +353,9 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         Guid? eventId = null,
         string? correlationId = null)
     {
-        EnsureExchangeExists(channel);
+        var eventType = EventTypes.GetOrDefault(eventName);
+
+        EnsureExchangeExists(channel, eventType!);
 
         var properties = channel.CreateBasicProperties();
         properties.DeliveryMode = RabbitMqConsts.DeliveryModes.Persistent;
@@ -331,7 +373,7 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         SetEventMessageHeaders(properties, headersArguments);
 
         channel.BasicPublish(
-            exchange: AbpRabbitMqEventBusOptions.ExchangeName,
+            exchange: IsRepeated(eventType!) ? GetExchangeName() : AbpRabbitMqEventBusOptions.ExchangeName,
             routingKey: eventName,
             mandatory: true,
             basicProperties: properties,
@@ -341,9 +383,9 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         return Task.CompletedTask;
     }
 
-    private void EnsureExchangeExists(IModel channel)
+    private void EnsureExchangeExists(IModel channel, Type eventType)
     {
-        if (_exchangeCreated)
+        if (_exchangeCreated.TryGetValue(eventType, out var isCreated) && isCreated)
         {
             return;
         }
@@ -358,12 +400,12 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         catch (Exception)
         {
             channel.ExchangeDeclare(
-                AbpRabbitMqEventBusOptions.ExchangeName,
-                AbpRabbitMqEventBusOptions.GetExchangeTypeOrDefault(),
+                IsRepeated(eventType) ? GetExchangeName() : AbpRabbitMqEventBusOptions.ExchangeName,
+                IsRepeated(eventType) ? "fanout" : AbpRabbitMqEventBusOptions.GetExchangeTypeOrDefault(),
                 durable: true
             );
         }
-        _exchangeCreated = true;
+        _exchangeCreated[eventType] = true;
     }
 
     private void SetEventMessageHeaders(IBasicProperties properties, Dictionary<string, object>? headersArguments)
@@ -430,5 +472,15 @@ public class RabbitMqDistributedEventBus : DistributedEventBusBase, ISingletonDe
         }
 
         return false;
+    }
+
+    private string GetExchangeName()
+    {
+        return AbpRabbitMqEventBusOptions.ExchangeName + "_Repeated";
+    }
+
+    private bool IsRepeated(Type eventType)
+    {
+        return eventType.IsDefined(typeof(MultiplexEventBusAttribute), false);
     }
 }

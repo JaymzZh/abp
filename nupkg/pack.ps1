@@ -6,7 +6,7 @@ del *.nupkg
 foreach($solution in $solutions) {
     $solutionFolder = Join-Path $rootFolder $solution
     Set-Location $solutionFolder
-    dotnet restore
+    dotnet build -c Release
 }
 
 # Create all packages

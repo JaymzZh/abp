@@ -4,8 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Volo.Abp.DependencyInjection;
 
-public abstract class CachedServiceProviderBase : ICachedServiceProviderBase
+public abstract class CachedServiceProviderBase : ICachedServiceProviderBase, IDisposable
 {
+    private bool _isDisposed;
     protected IServiceProvider ServiceProvider { get; }
     protected ConcurrentDictionary<ServiceIdentifier, Lazy<object?>> CachedServices { get; }
 
@@ -61,5 +62,26 @@ public abstract class CachedServiceProviderBase : ICachedServiceProviderBase
             new ServiceIdentifier(serviceKey, serviceType),
             _ => new Lazy<object?>(() =>  ServiceProvider.GetRequiredKeyedService(serviceType, serviceKey))
         ).Value!;
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
+        if (disposing)
+        {
+            CachedServices.Clear();
+        }
+
+        _isDisposed = true;
     }
 }

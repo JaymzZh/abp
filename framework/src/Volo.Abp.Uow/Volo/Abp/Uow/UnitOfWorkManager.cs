@@ -99,11 +99,17 @@ public class UnitOfWorkManager : IUnitOfWorkManager, ISingletonDependency
 
             _ambientUnitOfWork.SetUnitOfWork(unitOfWork);
 
-            unitOfWork.Disposed += (sender, args) =>
+            EventHandler<UnitOfWorkEventArgs> unitOfWorkOnDisposed()
             {
-                _ambientUnitOfWork.SetUnitOfWork(outerUow);
-                scope.Dispose();
-            };
+                return (sender, args) =>
+                {
+                    _ambientUnitOfWork.SetUnitOfWork(outerUow);
+                    unitOfWork.Disposed -= unitOfWorkOnDisposed();
+                    scope.Dispose();
+                };
+            }
+
+            unitOfWork.Disposed += unitOfWorkOnDisposed();
 
             return unitOfWork;
         }
